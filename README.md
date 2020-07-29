@@ -1,4 +1,4 @@
-# Streamlit Demo: EKA Goals Modelling
+# Streamlit Demo: England Korfball League Goals Scored Distributions
 
 
 This project demonstrates Streamlit's sidebar and plotting features.
