@@ -10,7 +10,7 @@ from scipy.special import factorial
 
 
 datasets = ('England Korfball League',)
-distributions = ("Poisson", "Normal", "Negative Binomial", "Gamma", "Binomial", "Log-Normal")
+distributions = ("Poisson", "Normal", "Negative Binomial", "Gamma", "Binomial")
 
 
 data_source = {'England Korfball League': 'https://raw.githubusercontent.com/andy-buv/streamlit-demo-korfgoals/master/eka_league_data.csv'}
@@ -18,8 +18,6 @@ data_source = {'England Korfball League': 'https://raw.githubusercontent.com/and
 st.sidebar.header('Dataset Filters')
 dataset = st.sidebar.selectbox("Select Dataset", datasets)
 
-
-# Make a github hosted file
 df = pd.read_csv(data_source[dataset])
 
 seasons = st.sidebar.multiselect("Select Seasons", df.Season.unique())
@@ -58,13 +56,13 @@ y = np.histogram(goals, bins=x_arr, density=True)[0]
 
 def get_dist_data(dist_name, params):
     if dist_name == "Poisson":
-        dist = stats.poisson(params['Lambda']).pmf(x_arr)
+        dist = stats.poisson(params['mu']).pmf(x_arr)
     elif dist_name == "Normal":
-        dist = stats.norm(params['Mu'], params['Std']).pdf(x_arr)
+        dist = stats.norm(params['loc'], params['scale']).pdf(x_arr)
     elif dist_name == "Negative Binomial": 
-        dist = stats.nbinom(params['N'], params['P']).pmf(x_arr)
+        dist = stats.nbinom(params['n'], params['p']).pmf(x_arr)
     elif dist_name == "Gamma":
-        dist = stats.gamma(params['A'], params['loc'], params['scale']).pdf(x_arr) 
+        dist = stats.gamma(params['a'], params['loc'], params['scale']).pdf(x_arr) 
     elif dist_name == "Binomial":
         dist = stats.binom(params['n'], params['p']).pmf(x_arr)
     elif dist_name == "Log-Normal":
@@ -145,12 +143,12 @@ def get_best_params(dist_name, data):
         mu = FitPoisson(data, guess)
         return {'mu': mu}
     elif dist_name == "Normal":
-        mu, std = stats.norm.fit(data)
-        return {'mu': mu, 'std': std}
+        loc, scale = stats.norm.fit(data)
+        return {'loc': loc, 'scale': scale}
     elif dist_name == "Negative Binomial":
         guess = [12, .5, 1]
-        N, p = FitNBinom(data, guess)
-        return {'N': N, 'p': p}
+        n, p = FitNBinom(data, guess)
+        return {'n': n, 'p': p}
     elif dist_name == 'Gamma':
         a, loc, scale = stats.gamma.fit(data)
         return {'a': a, 'loc': loc, 'scale': scale}
@@ -164,32 +162,32 @@ def add_parameter_ui(dist_name):
     params = dict()
     best_params = get_best_params(dist_name, goals)
     if dist_name == "Poisson":
-        l = st.sidebar.slider("Lambda", 0.00, 50.0, best_params['mu'])
-        params['Lambda'] = l
+        mu = st.sidebar.slider("μ", 0.00, 50.0, best_params['mu'])
+        params['mu'] = mu
         
     elif dist_name == "Normal":
-        mu = st.sidebar.slider("Mu", 0.0, 50.0, best_params['mu'])
-        std = st.sidebar.slider("Std", 0.0, 10.0, best_params['std'])
-        params['Mu'] = mu
-        params['Std'] = std
+        loc = st.sidebar.slider("loc", 0.0, 50.0, best_params['loc'])
+        scale = st.sidebar.slider("scale", 0.0, 10.0, best_params['scale'])
+        params['loc'] = loc
+        params['scale'] = scale
         
     elif dist_name == "Negative Binomial":
-        n = st.sidebar.slider('N', 0.0, 50.0, best_params['N'])
-        p = st.sidebar.slider('P', 0.010, 1.0, best_params['p'])
-        params['N'] = n
-        params['P'] = p
+        n = st.sidebar.slider('n', 0.0, 50.0, best_params['n'])
+        p = st.sidebar.slider('p', 0.010, 1.0, best_params['p'])
+        params['n'] = n
+        params['p'] = p
         
     elif dist_name == "Gamma":
-        a = st.sidebar.slider('A', 0.0, 50.0, best_params['a'])
+        a = st.sidebar.slider('a', 0.0, 50.0, best_params['a'])
         loc = st.sidebar.slider('loc', -50., 50., best_params['loc'])
         scale = st.sidebar.slider('scale', 0.0, 20., best_params['scale'])
-        params['A'] = a
+        params['a'] = a
         params['loc'] = loc
         params['scale'] = scale
     
     elif dist_name == "Binomial":
-        n = st.sidebar.slider('n', 0, 100)
-        p = st.sidebar.slider('p', 0.0, 1.0)
+        n = st.sidebar.slider('n', 0, 3000, best_params['n'])
+        p = st.sidebar.slider('p', 0.0, 1.0, best_params['p'])
         params['n'] = n
         params['p'] = p
         
@@ -203,6 +201,43 @@ def add_parameter_ui(dist_name):
 
     return params
 
+def get_formula(dist_name):
+    
+    formulas = {'Normal': r"""
+The probability density function for norm is:
+
+$f(x) = \frac{\exp(-x^2/2)}{\sqrt{2\pi}}$
+    
+for a real number $x$.""",
+               'Poisson': r"""
+The probabilty mass function for poisson is:
+
+$f(k) = \exp(-\mu) \frac{\mu^k}{k!}$
+
+for $k \ge 0$.
+poisson takes $\mu$ as shape parameter.""",
+               'Negative Binomial': r"""
+The probability mass function of the number of failures for nbinom is:
+
+$f(k) = \binom{k+n-1}{n-1} p^n (1-p)^k$
+
+for $k \ge 0$.""",
+               'Gamma': r"""
+The probability density function for gamma is:
+
+$f(x, a, b) = \frac{\Gamma(a+b) x^{a-1} (1-x)^{b-1}}
+                          {\Gamma(a) \Gamma(b)}$               
+
+for $x \ge 0, a \gt 0$. Here $\Gamma(a)$ refers to the gamma function.""",
+               'Binomial': r"""
+The probability mass function for binomial is:
+
+$f(k) = \binom{n}{k} p^k (1-p)^{n-k}$
+
+for $k$ in $(0, 1,..., n)$."""}
+    
+    return formulas[dist_name]
+    
     
 def sse(actual, predicted):
     squared_errors = (actual - predicted)**2
@@ -238,6 +273,9 @@ def main():
     
     params = add_parameter_ui(dist_name)        
 
+    st.sidebar.markdown('#### Formula')
+    formula = st.sidebar.markdown(get_formula(dist_name))
+    
     dist = get_dist_data(dist_name, params)
 
     graph = plot_data(goals, dist, dist_name, params)
