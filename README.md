@@ -7,6 +7,7 @@ It allows users to play around with fitting statistical distributions to the Eng
 
 ![In-use Animation](https://github.com/andy-buv/streamlit-demo-korfgoals/blob/master/app_demo.gif?raw=true "In-use Animation")
 
+![Screenshot](https://github.com/andy-buv/streamlit-demo-korfgoals/blob/master/main_screenshot.png?raw=true "Screenshot")
 ## How to run this demo
 ```
 pip install --upgrade streamlit sklearn
