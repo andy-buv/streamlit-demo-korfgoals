@@ -24,7 +24,7 @@ seasons = st.sidebar.multiselect("Select Seasons", df.Season.unique())
 teams = st.sidebar.multiselect("Select Teams", df['Home Team'].sort_values().unique())
 venue = st.sidebar.multiselect("Select Venue", venues)
 
-def filter_scores(data, teams, seasons, venue=[]):
+def filter_scores(data, teams, seasons, venue):
     if seasons != []:
         data = data.loc[data['Season'].isin(seasons)]
     
@@ -35,15 +35,20 @@ def filter_scores(data, teams, seasons, venue=[]):
         home_scores = data
         away_scores = data
     
-    stacked_scores = pd.concat([home_scores['Home Score'], away_scores['Away Score']], 
-                               ignore_index=True)
+    if venue == ['Home']:
+        stacked_scores = home_scores['Home Score']
+    elif venue == ['Away']:
+        stacked_scores = away_scores['Away Score']
+    else:    
+        stacked_scores = pd.concat([home_scores['Home Score'], away_scores['Away Score']], 
+                                   ignore_index=True)
     stacked_scores = pd.DataFrame(stacked_scores).dropna()
     stacked_scores.columns = ['Goals']
     
     return stacked_scores
 
 
-goals = filter_scores(df, teams, seasons)['Goals']
+goals = filter_scores(df, teams, seasons, venue)['Goals']
 
 st.sidebar.header('Histogram')
 
