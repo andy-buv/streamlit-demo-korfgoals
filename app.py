@@ -11,7 +11,7 @@ from scipy.special import factorial
 
 datasets = ('England Korfball League',)
 distributions = ("Poisson", "Normal", "Negative Binomial", "Gamma", "Binomial")
-
+venues = ("Home", "Away")
 
 data_source = {'England Korfball League': 'https://raw.githubusercontent.com/andy-buv/streamlit-demo-korfgoals/master/eka_league_data.csv'}
 
@@ -22,9 +22,9 @@ df = pd.read_csv(data_source[dataset])
 
 seasons = st.sidebar.multiselect("Select Seasons", df.Season.unique())
 teams = st.sidebar.multiselect("Select Teams", df['Home Team'].sort_values().unique())
+venue = st.sidebar.multiselect("Select Venue", venues)
 
-
-def filter_scores(data, teams, seasons):
+def filter_scores(data, teams, seasons, venue=[]):
     if seasons != []:
         data = data.loc[data['Season'].isin(seasons)]
     
@@ -34,7 +34,7 @@ def filter_scores(data, teams, seasons):
     else:
         home_scores = data
         away_scores = data
-        
+    
     stacked_scores = pd.concat([home_scores['Home Score'], away_scores['Away Score']], 
                                ignore_index=True)
     stacked_scores = pd.DataFrame(stacked_scores).dropna()
@@ -70,6 +70,7 @@ def get_dist_data(dist_name, params):
     return dist
 
 
+### CONVERT PLOTTING CHART TO ALTAIR
 def plot_data(data, dist, dist_name, params):
     f = plt.hist(data, bins=x_arr,
              edgecolor='white', alpha=0.5, density=True)
@@ -304,6 +305,11 @@ def main():
 
     **Explained Variance: ** {e_var:.3f}""")
 
+
+    
+    chart_data = pd.concat([pd.DataFrame(y), pd.DataFrame(dist)], axis=1)
+    chart_data.columns = ['goals', 'dist']
+    
 
 if __name__ == '__main__':
     main()
