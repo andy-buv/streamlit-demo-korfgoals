@@ -284,69 +284,77 @@ def main():
     venue = st.sidebar.multiselect("Select Venue", venues)
     goals = filter_scores(df, teams, seasons, venue)['Goals']
 
+    
 
     st.sidebar.header('Histogram')
 
     bin_size = st.sidebar.number_input('Bin Size', 1, 10, 2)
     x_max = goals.max() + 1
 
-
-    global x 
-    x = np.arange(0, x_max, bin_size)
-    global x_arr
-    x_arr = np.arange(0, x_max + bin_size, bin_size)
-    global y
-    y = np.histogram(goals, bins=x_arr, density=True)[0]
-
-    st.write(f"""
-    **Observations: ** {goals.count()}
-    
-    **Mean: ** {goals.mean():.2f}
-    **Var: ** {goals.var():.2f}
-    **Std: ** {goals.std():.2f}
-    **Skew: ** {goals.skew():.2f}
-    **Kurtosis: ** {goals.kurtosis():.2f}""")
-    
-
-    st.sidebar.header('Distribution Parameters')
+    if goals.size == 0:
+        st.warning('No Data. Please update dataset filters.')
+    else:
 
 
-    dist_name = st.sidebar.selectbox("Select Distribution", distributions)
-    
-    params = add_parameter_ui(dist_name, y)        
-
-    st.sidebar.markdown('#### Formula')
-    formula = st.sidebar.markdown(get_formula(dist_name))
-    
-    dist = get_dist_data(dist_name, params)
-
-    # graph = plot_data(goals, dist, dist_name, params)
-    graph = st.altair_chart(plot_altair(y, dist, dist_name, bin_size))
-    
-    g_data, dist_data = y, dist[:-1]
+        global x 
+        x = np.arange(0, x_max, bin_size)
+        global x_arr
+        x_arr = np.arange(0, x_max + bin_size, bin_size)
+        global y
+        y = np.histogram(goals, bins=x_arr, density=True)[0]
 
 
-    mse = metrics.mean_squared_error(g_data, dist_data)
-    rmse = mse ** .5
-    e_var = metrics.explained_variance_score(g_data, dist_data)
-    max_error = metrics.max_error(g_data, dist_data)
-    mae = metrics.mean_absolute_error(g_data, dist_data)
-    # r2_score = metrics.r2_score(g_data, dist_data)
-    sum_square_errors = sse(g_data, dist_data)
-    total_sum_square = sst(g_data)
+        st.write(f"""
+        **Observations: ** {goals.count()}
+
+        **Mean: ** {goals.mean():.2f}
+        **Var: ** {goals.var():.2f}
+        **Std: ** {goals.std():.2f}
+        **Skew: ** {goals.skew():.2f}
+        **Kurtosis: ** {goals.kurtosis():.2f}""")
 
 
-    st.write(f"""
-    **MSE: ** {mse * 100 :.5f}
-    **RMSE: ** {rmse : .5f}
-    
-    **Max Error:** {max_error: .5f}
-    **MAE: ** {mae: .5f}
-    **SSE: ** {sum_square_errors: .5f}
-    **SST: ** {total_sum_square: .5f}
+        st.sidebar.header('Distribution Parameters')
 
-    **Explained Variance: ** {e_var:.3f}""")
-    
+
+        dist_name = st.sidebar.selectbox("Select Distribution", distributions)
+
+        params = add_parameter_ui(dist_name, y)        
+
+        st.sidebar.markdown('#### Formula')
+        formula = st.sidebar.markdown(get_formula(dist_name))
+
+        dist = get_dist_data(dist_name, params)
+
+        # graph = plot_data(goals, dist, dist_name, params)
+
+
+        graph = st.altair_chart(plot_altair(y, dist, dist_name, bin_size))
+
+        g_data, dist_data = y, dist[:-1]
+
+
+        mse = metrics.mean_squared_error(g_data, dist_data)
+        rmse = mse ** .5
+        e_var = metrics.explained_variance_score(g_data, dist_data)
+        max_error = metrics.max_error(g_data, dist_data)
+        mae = metrics.mean_absolute_error(g_data, dist_data)
+        # r2_score = metrics.r2_score(g_data, dist_data)
+        sum_square_errors = sse(g_data, dist_data)
+        total_sum_square = sst(g_data)
+
+
+        st.write(f"""
+        **MSE: ** {mse * 100 :.5f}
+        **RMSE: ** {rmse : .5f}
+
+        **Max Error:** {max_error: .5f}
+        **MAE: ** {mae: .5f}
+        **SSE: ** {sum_square_errors: .5f}
+        **SST: ** {total_sum_square: .5f}
+
+        **Explained Variance: ** {e_var:.3f}""")
+
     
     
 if __name__ == '__main__':
