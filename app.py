@@ -7,6 +7,7 @@ from sklearn import metrics
 from scipy.optimize import minimize, fmin
 from scipy.special import comb
 from scipy.special import factorial
+import altair as alt
 
 
 datasets = ('England Korfball League',)
@@ -88,7 +89,31 @@ def plot_data(data, dist, dist_name, params):
     st.pyplot()
     return f
     
+def plot_altair(hist, dist, dist_name, bin_size):
     
+    brush = alt.selection_interval(encodings=['x'])
+    
+    data = pd.DataFrame.from_dict({'rf': hist, 
+                         'p': dist}, orient='index').transpose().fillna(0).reset_index()
+    
+    data['index'] = data['index'] * bin_size
+
+    base = alt.Chart(data, title=f'{dist_name} Estimation of EKA Goals').encode(
+        alt.X('index:Q', title='Goals Scored', 
+              bin=alt.Bin(step=bin_size), axis=alt.Axis(values=[-5, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55])))
+    
+    bar = base.mark_bar(opacity=.7).encode(
+        alt.Y('rf:Q'))
+    
+    rule = base.mark_rule(size=2).encode(alt.X('index:Q'),
+        alt.Y('p:Q', title='Relative Frequency', axis=alt.Axis(tickCount=5)))
+    
+    
+    #chart1 = alt.Chart(data).mark_bar().encode(x='index', y='rf')
+    #chart2 = alt.Chart(dist_df).mark_rule().encode(x='index', y='p')
+    
+    return alt.layer(bar, rule).properties(width=600, height=500).configure_axis(titleFontSize=16).configure_title(fontSize=20)
+
 def MLERegressionNBinom(params):
     n, p, sd = params[0], params[1], params[2]
     yhat = comb(x+n-1, x)* (p**n) * ((1-p)**x)
@@ -265,12 +290,14 @@ def main():
     
 
     st.write(f"""
-
+    **Observations: ** {goals.count()}
+    
     **Mean: ** {goals.mean():.2f}
     **Var: ** {goals.var():.2f}
     **Std: ** {goals.std():.2f}
     **Skew: ** {goals.skew():.2f}
     **Kurtosis: ** {goals.kurtosis():.2f}""")
+    
 
     st.sidebar.header('Distribution Parameters')
 
@@ -284,9 +311,10 @@ def main():
     
     dist = get_dist_data(dist_name, params)
 
-    graph = plot_data(goals, dist, dist_name, params)
-
-    g_data, dist_data = graph[0], dist[:-1]
+    # graph = plot_data(goals, dist, dist_name, params)
+    graph = st.altair_chart(plot_altair(y, dist, dist_name, bin_size))
+    
+    g_data, dist_data = y, dist[:-1]
 
 
     mse = metrics.mean_squared_error(g_data, dist_data)
@@ -309,12 +337,8 @@ def main():
     **SST: ** {total_sum_square: .5f}
 
     **Explained Variance: ** {e_var:.3f}""")
-
-
     
-    chart_data = pd.concat([pd.DataFrame(y), pd.DataFrame(dist)], axis=1)
-    chart_data.columns = ['goals', 'dist']
     
-
+    
 if __name__ == '__main__':
     main()
