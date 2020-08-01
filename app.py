@@ -153,20 +153,21 @@ def FitBinomial(data, guess):
     else:
         return results.x[:2]
     
+    
 def get_best_params(dist_name, data):
     if dist_name == "Poisson":
         guess = [20, 1]
         mu = FitPoisson(data, guess)
         return {'mu': mu}
     elif dist_name == "Normal":
-        loc, scale = stats.norm.fit(data)
+        loc, scale = stats.norm.fit(goals)
         return {'loc': loc, 'scale': scale}
     elif dist_name == "Negative Binomial":
         guess = [12, .5, 1]
         n, p = FitNBinom(data, guess)
         return {'n': n, 'p': p}
     elif dist_name == 'Gamma':
-        a, loc, scale = stats.gamma.fit(data)
+        a, loc, scale = stats.gamma.fit(goals)
         return {'a': a, 'loc': loc, 'scale': scale}
     elif dist_name == 'Binomial':
         guess = [10, .4, 1]
@@ -282,13 +283,14 @@ def main():
     seasons = st.sidebar.multiselect("Select Seasons", df.Season.unique())
     teams = st.sidebar.multiselect("Select Teams", df['Home Team'].sort_values().unique())
     venue = st.sidebar.multiselect("Select Venue", venues)
+    global goals
     goals = filter_scores(df, teams, seasons, venue)['Goals']
 
     
 
     st.sidebar.header('Histogram')
 
-    bin_size = st.sidebar.number_input('Bin Size', 1, 10, 2)
+    bin_size = st.sidebar.number_input('Bin Size', 1, 10, 1)
     x_max = goals.max() + 1
 
     if goals.size == 0:
