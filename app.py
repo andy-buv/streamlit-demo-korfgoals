@@ -14,18 +14,13 @@ datasets = ('England Korfball League',)
 distributions = ("Poisson", "Normal", "Negative Binomial", "Gamma", "Binomial")
 venues = ("Home", "Away")
 
-data_source = {'England Korfball League': 'https://raw.githubusercontent.com/andy-buv/streamlit-demo-korfgoals/master/eka_league_data.csv'}
+data_sources = {'England Korfball League': 'https://raw.githubusercontent.com/andy-buv/' \
+                                          'streamlit-demo-korfgoals/master/eka_league_data.csv'}
 
-st.sidebar.header('Dataset Filters')
-dataset = st.sidebar.selectbox("Select Dataset", datasets)
 
-df = pd.read_csv(data_source[dataset])
-
-seasons = st.sidebar.multiselect("Select Seasons", df.Season.unique())
-teams = st.sidebar.multiselect("Select Teams", df['Home Team'].sort_values().unique())
-venue = st.sidebar.multiselect("Select Venue", venues)
 
 def filter_scores(data, teams, seasons, venue):
+    
     if seasons != []:
         data = data.loc[data['Season'].isin(seasons)]
     
@@ -43,21 +38,14 @@ def filter_scores(data, teams, seasons, venue):
     else:    
         stacked_scores = pd.concat([home_scores['Home Score'], away_scores['Away Score']], 
                                    ignore_index=True)
+        
     stacked_scores = pd.DataFrame(stacked_scores).dropna()
     stacked_scores.columns = ['Goals']
     
     return stacked_scores
 
 
-goals = filter_scores(df, teams, seasons, venue)['Goals']
 
-st.sidebar.header('Histogram')
-
-bin_size = st.sidebar.number_input('Bin Size', 1, 10, 2)
-x_max = goals.max() + 1
-x = np.arange(0, x_max, bin_size)
-x_arr = np.arange(0, x_max + bin_size, bin_size)
-y = np.histogram(goals, bins=x_arr, density=True)[0]
 
 
 def get_dist_data(dist_name, params):
@@ -108,9 +96,6 @@ def plot_altair(hist, dist, dist_name, bin_size):
     rule = base.mark_rule(size=2).encode(alt.X('index:Q'),
         alt.Y('p:Q', title='Relative Frequency', axis=alt.Axis(tickCount=5)))
     
-    
-    #chart1 = alt.Chart(data).mark_bar().encode(x='index', y='rf')
-    #chart2 = alt.Chart(dist_df).mark_rule().encode(x='index', y='p')
     
     return alt.layer(bar, rule).properties(width=600, height=500).configure_axis(titleFontSize=16).configure_title(fontSize=20)
 
@@ -189,9 +174,9 @@ def get_best_params(dist_name, data):
         return {'n': int(n), 'p': p}
     
     
-def add_parameter_ui(dist_name):
+def add_parameter_ui(dist_name, data):
     params = dict()
-    best_params = get_best_params(dist_name, goals)
+    best_params = get_best_params(dist_name, data)
     if dist_name == "Poisson":
         mu = st.sidebar.slider("μ", 0.00, 50.0, best_params['mu'])
         params['mu'] = mu
@@ -234,6 +219,7 @@ def add_parameter_ui(dist_name):
 
 def get_formula(dist_name):
     
+    # Put this into a seperate formulas.py file
     formulas = {'Normal': r"""
 The probability density function for norm is:
 
@@ -288,6 +274,29 @@ def main():
     Statistical Estimations of Goals Scored in the England Korfball League Since 2014/15 Season""")
     
     
+    st.sidebar.header('Dataset Filters')
+    dataset = st.sidebar.selectbox("Select Dataset", datasets)
+
+    df = pd.read_csv(data_sources[dataset])
+
+    seasons = st.sidebar.multiselect("Select Seasons", df.Season.unique())
+    teams = st.sidebar.multiselect("Select Teams", df['Home Team'].sort_values().unique())
+    venue = st.sidebar.multiselect("Select Venue", venues)
+    goals = filter_scores(df, teams, seasons, venue)['Goals']
+
+
+    st.sidebar.header('Histogram')
+
+    bin_size = st.sidebar.number_input('Bin Size', 1, 10, 2)
+    x_max = goals.max() + 1
+
+
+    global x 
+    x = np.arange(0, x_max, bin_size)
+    global x_arr
+    x_arr = np.arange(0, x_max + bin_size, bin_size)
+    global y
+    y = np.histogram(goals, bins=x_arr, density=True)[0]
 
     st.write(f"""
     **Observations: ** {goals.count()}
@@ -304,7 +313,7 @@ def main():
 
     dist_name = st.sidebar.selectbox("Select Distribution", distributions)
     
-    params = add_parameter_ui(dist_name)        
+    params = add_parameter_ui(dist_name, y)        
 
     st.sidebar.markdown('#### Formula')
     formula = st.sidebar.markdown(get_formula(dist_name))
