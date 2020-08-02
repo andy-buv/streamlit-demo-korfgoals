@@ -183,8 +183,8 @@ def add_parameter_ui(dist_name, data):
         params['mu'] = mu
         
     elif dist_name == "Normal":
-        loc = st.sidebar.slider("loc", 0.0, 50.0, best_params['loc'])
-        scale = st.sidebar.slider("scale", 0.0, 10.0, best_params['scale'])
+        loc = st.sidebar.slider("μ", 0.0, 50.0, best_params['loc'])
+        scale = st.sidebar.slider("σ²", 0.0, 10.0, best_params['scale'])
         params['loc'] = loc
         params['scale'] = scale
         
@@ -224,30 +224,34 @@ def get_formula(dist_name):
     formulas = {'Normal': r"""
 The probability density function for norm is:
 
-$f(x) = \frac{\exp(-x^2/2)}{\sqrt{2\pi}}$
-    
+$f(x) = \frac{1}{\sigma\sqrt{2\pi}}e^{-\frac{1}{2}(\frac{x-\mu}{\sigma})^{2}}$
+
 for a real number $x$.""",
-               'Poisson': r"""
+               
+                'Poisson': r"""
 The probabilty mass function for poisson is:
 
 $f(k) = \exp(-\mu) \frac{\mu^k}{k!}$
 
 for $k \ge 0$.
 poisson takes $\mu$ as shape parameter.""",
-               'Negative Binomial': r"""
+               
+                'Negative Binomial': r"""
 The probability mass function of the number of failures for nbinom is:
 
 $f(k) = \binom{k+n-1}{n-1} p^n (1-p)^k$
 
 for $k \ge 0$.""",
-               'Gamma': r"""
+               
+                'Gamma': r"""
 The probability density function for gamma is:
 
 $f(x, a, b) = \frac{\Gamma(a+b) x^{a-1} (1-x)^{b-1}}
                           {\Gamma(a) \Gamma(b)}$               
 
 for $x \ge 0, a \gt 0$. Here $\Gamma(a)$ refers to the gamma function.""",
-               'Binomial': r"""
+               
+                'Binomial': r"""
 The probability mass function for binomial is:
 
 $f(k) = \binom{n}{k} p^k (1-p)^{n-k}$
