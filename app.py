@@ -108,12 +108,12 @@ def MLERegressionNBinom(params):
 
 
 def FitNBinom(data, guess):
-    results = minimize(MLERegressionNBinom, guess, 
+    results = minimize(MLERegressionNBinom, guess,
                        method='Nelder-Mead', options={'disp': True})
     if results.success:
         return results.x[:2]
     else:
-        return 'Best Fit Not Found'
+        return results
     
     
 def MLERegressionPoisson(params):
@@ -163,8 +163,13 @@ def get_best_params(dist_name, data):
         loc, scale = stats.norm.fit(goals)
         return {'loc': loc, 'scale': scale}
     elif dist_name == "Negative Binomial":
-        guess = [12, .5, 1]
-        n, p = FitNBinom(data, guess)
+        guess = [20, .3, 1]
+        #st.write(FitNBinom(data,guess))
+        try:
+            n, p = FitNBinom(data, guess)
+        except ValueError:
+            st.sidebar.warning('Best Fit Not Found!')
+            n, p = goals.mean(), .5
         return {'n': n, 'p': p}
     elif dist_name == 'Gamma':
         a, loc, scale = stats.gamma.fit(goals)
@@ -309,7 +314,7 @@ def main():
         global y
         y = np.histogram(goals, bins=x_arr, density=True)[0]
 
-
+        
         st.write(f"""
         **Observations: ** {goals.count()}
 
